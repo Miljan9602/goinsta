@@ -32,7 +32,6 @@ type reqOptions struct {
 	UseV2 bool
 
 	// Query is the parameters of the request
-	//
 	// This parameters are independents of the request method (POST|GET)
 	Query map[string]string
 }
@@ -99,6 +98,7 @@ func (insta *Instagram) sendRequest(o *reqOptions) (body []byte, err error) {
 	req.Header.Set("X-IG-Bandwidth-TotalBytes-B", "0")
 	req.Header.Set("X-IG-Bandwidth-TotalTime-MS", "0")
 
+
 	resp, err := insta.c.Do(req)
 	if err != nil {
 		return nil, err
@@ -106,6 +106,7 @@ func (insta *Instagram) sendRequest(o *reqOptions) (body []byte, err error) {
 	defer resp.Body.Close()
 
 	u, _ = url.Parse(goInstaAPIUrl)
+
 	for _, value := range insta.c.Jar.Cookies(u) {
 		if strings.Contains(value.Name, "csrftoken") {
 			insta.token = value.Value
@@ -116,6 +117,7 @@ func (insta *Instagram) sendRequest(o *reqOptions) (body []byte, err error) {
 	if err == nil {
 		err = isError(resp.StatusCode, body)
 	}
+
 	return body, err
 }
 
@@ -127,6 +129,12 @@ func isError(code int, body []byte) (err error) {
 			Message: "Instagram API error. Try it later.",
 		}
 	case 400:
+
+		cerr := ChallengeError{}
+		if err = json.Unmarshal(body, &cerr); err == nil {
+			return cerr
+		}
+
 		ierr := Error400{}
 		err = json.Unmarshal(body, &ierr)
 		if err == nil && ierr.Payload.Message != "" {

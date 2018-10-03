@@ -11,6 +11,7 @@ type ConfigFile struct {
 	User      string         `json:"username"`
 	DeviceID  string         `json:"device_id"`
 	UUID      string         `json:"uuid"`
+	Nonce     string         `json:"nonce"`
 	RankToken string         `json:"rank_token"`
 	Token     string         `json:"token"`
 	PhoneID   string         `json:"phone_id"`
@@ -57,6 +58,50 @@ type Error400 struct {
 		Message       string `json:"message"`
 	} `json:"payload"`
 	Status string `json:"status"`
+}
+
+type Challenge struct {
+	URL               string `json:"url"`
+	ApiPath           string `json:"api_path"`
+	HideWebviewHeader bool   `json:"hide_webview_header"`
+	Lock              bool   `json:"lock"`
+	Logout            bool   `json:"logout"`
+	NativeFlow        bool   `json:"native_flow"`
+}
+
+type ChallengeError struct {
+	Message   string    `json:"message"`
+	Challenge Challenge `json:"challenge"`
+	Status    string    `json:"status"`
+	ErrorType string    `json:"error_type"`
+}
+
+type SelectVerifyMethod struct {
+	StepName string `json:"select_verify_method"`
+
+	StepData struct {
+		Choice           string `json:"choice"`
+		FbAccessToken    string `json:"fb_access_token"`
+		BigBlueToken     string `json:"big_blue_token"`
+		GoogleOauthToken string `json:"google_oauth_token"`
+		Email            string `json:"email"`
+		PhoneNumber      string `json:"phone_number"`
+	} `json:"step_data"`
+
+	UserID    int64  `json:"user_id"`
+	NonceCode string `json:"nonce_code"`
+	Status    string `json:"status"`
+}
+
+type InstagramVerification struct {
+	StepName  string `json:"step_name"`
+	UserID    int64  `json:"user_id"`
+	NonceCode string `json:"nonce_code"`
+	Status    string `json:"status"`
+}
+
+func (ce ChallengeError) Error() string {
+	return fmt.Sprintf("%s: %s", ce.Message, ce.Challenge)
 }
 
 func (e Error400) Error() string {

@@ -24,6 +24,8 @@ _testmain.go
 *.prof
 
 *.out
+*.env
+
 
 # ignore Intellij products technical folder
 .idea/
@@ -31,3 +33,4 @@ _testmain.go
 .vscode/
 .tests/
 examples/configs/
+example/test

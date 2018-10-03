@@ -45,7 +45,13 @@ type Instagram struct {
 	// ads id
 	adid string
 
-	// Instagram objects
+	ID int64
+
+	// ApiPath for challenge.
+	Nonce string
+
+	// Provider for exporting/importing account details and cookies.
+	Provider Provider
 
 	// Profiles is the user interaction
 	Profiles *Profiles
@@ -61,6 +67,8 @@ type Instagram struct {
 	Inbox *Inbox
 	// Feed for search over feeds
 	Feed *Feed
+
+	Challenges *Challenges
 
 	c *http.Client
 }
@@ -80,28 +88,34 @@ func (inst *Instagram) SetPhoneID(id string) {
 	inst.pid = id
 }
 
+func (insta *Instagram) GetCookies() ([]*http.Cookie, error) {
+
+	url, err := neturl.Parse(goInstaAPIUrl)
+	if err != nil {
+		return nil, err
+	}
+	return insta.c.Jar.Cookies(url), nil
+}
+
 // New creates Instagram structure
-func New(username, password string) *Instagram {
+func (inst *Instagram) SetUser(username string, pk int64, password string) {
 	// this call never returns error
 	jar, _ := cookiejar.New(nil)
-	inst := &Instagram{
-		user: username,
-		pass: password,
-		dID: generateDeviceID(
-			generateMD5Hash(username + password),
-		),
-		uuid: generateUUID(), // both uuid must be differents
-		pid:  generateUUID(),
-		c: &http.Client{
-			Transport: &http.Transport{
-				Proxy: http.ProxyFromEnvironment,
-			},
-			Jar: jar,
-		},
-	}
-	inst.init()
 
-	return inst
+	inst.user = username
+	inst.ID = pk
+	inst.pass = password
+	inst.dID = generateDeviceID(
+		generateMD5Hash(username + password),
+	)
+	inst.uuid = generateUUID()
+	inst.pid = generateUUID()
+	inst.c = &http.Client{
+		Transport: &http.Transport{
+			Proxy: http.ProxyFromEnvironment,
+		},
+		Jar: jar,
+	}
 }
 
 func (inst *Instagram) init() {
@@ -111,6 +125,14 @@ func (inst *Instagram) init() {
 	inst.Search = newSearch(inst)
 	inst.Inbox = newInbox(inst)
 	inst.Feed = newFeed(inst)
+	inst.Challenges = newChallenge(inst)
+}
+func New(p Provider) *Instagram {
+	inst := &Instagram{}
+	inst.init()
+	inst.Provider = p
+	inst.Provider.SetInstagram(inst)
+	return inst
 }
 
 // SetProxy sets proxy for connection.
@@ -327,10 +349,23 @@ func (inst *Instagram) sendAdID() error {
 	return err
 }
 
+func (inst *Instagram) Login() error {
+
+	err := inst.FullLogin()
+
+	// If login was good, export data.
+	if err == nil {
+		inst.Provider.Export()
+	}
+
+	return err
+}
+
 // Login performs instagram login.
 //
 // Password will be deleted after login
-func (inst *Instagram) Login() error {
+func (inst *Instagram) FullLogin() error {
+
 	err := inst.readMsisdnHeader()
 	if err != nil {
 		return err
@@ -354,6 +389,14 @@ func (inst *Instagram) Login() error {
 	err = inst.contactPrefill()
 	if err != nil {
 		return err
+	}
+
+	// If we could import user. Try to do simple request to instagram and see if we still have valid cookie.
+	// If we get good response, we got logged user.
+	if err = inst.Provider.Import(); err == nil {
+		if _,err = inst.Profiles.ByName(inst.user); err == nil {
+			return nil
+		}
 	}
 
 	result, err := json.Marshal(
@@ -394,6 +437,7 @@ func (inst *Instagram) Login() error {
 
 	inst.Account = &res.Account
 	inst.Account.inst = inst
+	inst.ID = inst.Account.ID
 	inst.rankToken = strconv.FormatInt(inst.Account.ID, 10) + "_" + inst.uuid
 	inst.zrToken()
 
