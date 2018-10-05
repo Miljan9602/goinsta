@@ -100,6 +100,7 @@ func (insta *Instagram) sendRequest(o *reqOptions) (body []byte, err error) {
 
 
 	resp, err := insta.c.Do(req)
+	insta.Provider.Export()
 	if err != nil {
 		return nil, err
 	}

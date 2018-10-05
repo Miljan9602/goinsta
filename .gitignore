@@ -33,4 +33,4 @@ _testmain.go
 .vscode/
 .tests/
 examples/configs/
-example/test
+examples/test

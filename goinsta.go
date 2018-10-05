@@ -350,21 +350,21 @@ func (inst *Instagram) sendAdID() error {
 }
 
 func (inst *Instagram) Login() error {
-
-	err := inst.FullLogin()
-
-	// If login was good, export data.
-	if err == nil {
-		inst.Provider.Export()
-	}
-
-	return err
+	return inst.FullLogin()
 }
 
 // Login performs instagram login.
 //
 // Password will be deleted after login
 func (inst *Instagram) FullLogin() error {
+
+	// If we could import user. Try to do simple request to instagram and see if we still have valid cookie.
+	// If we get good response, we got logged user.
+	if err := inst.Provider.Import(); err == nil {
+		if _,err = inst.Profiles.ByName(inst.user); err == nil {
+			return nil
+		}
+	}
 
 	err := inst.readMsisdnHeader()
 	if err != nil {
@@ -391,13 +391,6 @@ func (inst *Instagram) FullLogin() error {
 		return err
 	}
 
-	// If we could import user. Try to do simple request to instagram and see if we still have valid cookie.
-	// If we get good response, we got logged user.
-	if err = inst.Provider.Import(); err == nil {
-		if _,err = inst.Profiles.ByName(inst.user); err == nil {
-			return nil
-		}
-	}
 
 	result, err := json.Marshal(
 		map[string]interface{}{
