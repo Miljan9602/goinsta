@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/go-redis/redis"
-	"net/http"
 	"net/http/cookiejar"
 	neturl "net/url"
 	"strconv"
@@ -23,10 +22,6 @@ type RedisProvider struct {
 	client *redis.Client
 
 	tableName string
-}
-
-func (res *RedisProvider) GetClient() *redis.Client {
-	return res.client
 }
 
 func (redis *RedisProvider) Export() error {
@@ -65,7 +60,6 @@ func (redis *RedisProvider) Import() error {
 	if err != nil {
 		return err
 	}
-
 	field := strconv.FormatInt(redis.GetInstagram().ID, 10)
 	res, err := redis.client.HGet(redis.tableName, field).Result()
 
@@ -93,11 +87,6 @@ func (redis *RedisProvider) Import() error {
 	inst.token = config.Token
 	inst.pid = config.PhoneID
 	inst.Nonce = config.Nonce
-	inst.c = &http.Client{
-		Transport: &http.Transport{
-			Proxy: http.ProxyFromEnvironment,
-		},
-	}
 
 	inst.c.Jar, err = cookiejar.New(nil)
 	if err != nil {

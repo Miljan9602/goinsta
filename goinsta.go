@@ -3,13 +3,10 @@ package goinsta
 import (
 	"crypto/tls"
 	"encoding/json"
-	"io"
-	"io/ioutil"
+	"github.com/sethgrid/pester"
 	"net/http"
 	"net/http/cookiejar"
 	neturl "net/url"
-	"os"
-	"path/filepath"
 	"strconv"
 	"time"
 )
@@ -70,7 +67,7 @@ type Instagram struct {
 
 	Challenges *Challenges
 
-	c *http.Client
+	c *pester.Client
 }
 
 // SetDeviceID sets device id
@@ -99,8 +96,6 @@ func (insta *Instagram) GetCookies() ([]*http.Cookie, error) {
 
 // New creates Instagram structure
 func (inst *Instagram) SetUser(username string, pk int64, password string) {
-	// this call never returns error
-	jar, _ := cookiejar.New(nil)
 
 	inst.user = username
 	inst.ID = pk
@@ -110,12 +105,6 @@ func (inst *Instagram) SetUser(username string, pk int64, password string) {
 	)
 	inst.uuid = generateUUID()
 	inst.pid = generateUUID()
-	inst.c = &http.Client{
-		Transport: &http.Transport{
-			Proxy: http.ProxyFromEnvironment,
-		},
-		Jar: jar,
-	}
 }
 
 func (inst *Instagram) init() {
@@ -127,11 +116,29 @@ func (inst *Instagram) init() {
 	inst.Feed = newFeed(inst)
 	inst.Challenges = newChallenge(inst)
 }
-func New(p Provider) *Instagram {
+func New(p Provider, options *PesterOptions) *Instagram {
 	inst := &Instagram{}
 	inst.init()
 	inst.Provider = p
 	inst.Provider.SetInstagram(inst)
+
+	// this call never returns error
+	jar, _ := cookiejar.New(nil)
+
+	inst.c = pester.New()
+	inst.c.Transport = &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+	}
+	inst.c.Jar = jar
+
+	if options == nil {
+		options = DefaultOptions()
+	}
+
+	inst.c.Concurrency = options.Concurrency
+	inst.c.Backoff = options.Backoff
+	inst.c.MaxRetries = options.MaxRetries
+
 	return inst
 }
 
@@ -152,122 +159,6 @@ func (inst *Instagram) SetProxy(url string, insecure bool) error {
 // UnsetProxy unsets proxy for connection.
 func (inst *Instagram) UnsetProxy() {
 	inst.c.Transport = nil
-}
-
-// Save exports config to ~/.goinsta
-func (inst *Instagram) Save() error {
-	home := os.Getenv("HOME")
-	if home == "" {
-		home = os.Getenv("home") // for plan9
-	}
-	return inst.Export(filepath.Join(home, ".goinsta"))
-}
-
-// Export exports *Instagram object options
-func (inst *Instagram) Export(path string) error {
-	url, err := neturl.Parse(goInstaAPIUrl)
-	if err != nil {
-		return err
-	}
-
-	config := ConfigFile{
-		ID:        inst.Account.ID,
-		User:      inst.user,
-		DeviceID:  inst.dID,
-		UUID:      inst.uuid,
-		RankToken: inst.rankToken,
-		Token:     inst.token,
-		PhoneID:   inst.pid,
-		Cookies:   inst.c.Jar.Cookies(url),
-	}
-	bytes, err := json.Marshal(config)
-	if err != nil {
-		return err
-	}
-
-	return ioutil.WriteFile(path, bytes, 0644)
-}
-
-// Export exports selected *Instagram object options to an io.Writer
-func Export(inst *Instagram, writer io.Writer) error {
-	url, err := neturl.Parse(goInstaAPIUrl)
-	if err != nil {
-		return err
-	}
-
-	config := ConfigFile{
-		ID:        inst.Account.ID,
-		User:      inst.user,
-		DeviceID:  inst.dID,
-		UUID:      inst.uuid,
-		RankToken: inst.rankToken,
-		Token:     inst.token,
-		PhoneID:   inst.pid,
-		Cookies:   inst.c.Jar.Cookies(url),
-	}
-	bytes, err := json.Marshal(config)
-	if err != nil {
-		return err
-	}
-	_, err = writer.Write(bytes)
-	return err
-}
-
-// ImportReader imports instagram configuration from io.Reader
-//
-// This function does not set proxy automatically. Use SetProxy after this call.
-func ImportReader(r io.Reader) (*Instagram, error) {
-	url, err := neturl.Parse(goInstaAPIUrl)
-	if err != nil {
-		return nil, err
-	}
-
-	bytes, err := ioutil.ReadAll(r)
-	if err != nil {
-		return nil, err
-	}
-
-	config := ConfigFile{}
-	err = json.Unmarshal(bytes, &config)
-	if err != nil {
-		return nil, err
-	}
-	inst := &Instagram{
-		user:      config.User,
-		dID:       config.DeviceID,
-		uuid:      config.UUID,
-		rankToken: config.RankToken,
-		token:     config.Token,
-		pid:       config.PhoneID,
-		c: &http.Client{
-			Transport: &http.Transport{
-				Proxy: http.ProxyFromEnvironment,
-			},
-		},
-	}
-	inst.c.Jar, err = cookiejar.New(nil)
-	if err != nil {
-		return inst, err
-	}
-	inst.c.Jar.SetCookies(url, config.Cookies)
-
-	inst.init()
-	inst.Account = &Account{inst: inst, ID: config.ID}
-	inst.Account.Sync()
-
-	return inst, nil
-}
-
-// Import imports instagram configuration
-//
-// This function does not set proxy automatically. Use SetProxy after this call.
-func Import(path string) (*Instagram, error) {
-	f, err := os.Open(path)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-	return ImportReader(f)
 }
 
 func (inst *Instagram) readMsisdnHeader() error {
