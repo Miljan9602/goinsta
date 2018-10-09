@@ -105,6 +105,7 @@ func (inst *Instagram) SetUser(username string, pk int64, password string) {
 	)
 	inst.uuid = generateUUID()
 	inst.pid = generateUUID()
+	inst.Provider.Import()
 }
 
 func (inst *Instagram) init() {
@@ -249,14 +250,6 @@ func (inst *Instagram) Login() error {
 // Password will be deleted after login
 func (inst *Instagram) FullLogin() error {
 
-	// If we could import user. Try to do simple request to instagram and see if we still have valid cookie.
-	// If we get good response, we got logged user.
-	if err := inst.Provider.Import(); err == nil {
-		if _,err = inst.Profiles.ByName(inst.user); err == nil {
-			return nil
-		}
-	}
-
 	err := inst.readMsisdnHeader()
 	if err != nil {
 		return err
@@ -282,6 +275,9 @@ func (inst *Instagram) FullLogin() error {
 		return err
 	}
 
+	if _, err := inst.Profiles.ByName(inst.user); err == nil {
+		return nil
+	}
 
 	result, err := json.Marshal(
 		map[string]interface{}{

@@ -25,7 +25,7 @@ func (ch *Challenges) GetInfo(pk int64, nonce string) (*SelectVerifyMethod, erro
 	ch.inst.Nonce = nonce
 	ch.inst.ID = pk
 
-	ApiPath := "challenge/" + strconv.FormatInt(pk, 10) + "/" + nonce
+	ApiPath := "challenge/" + strconv.FormatInt(pk, 10) + "/" + nonce+"/"
 
 	body, err := ch.inst.sendRequest(&reqOptions{
 		Endpoint: ApiPath,
@@ -51,7 +51,7 @@ func (ch *Challenges) SelectVerifyMethod(choice string) (*InstagramVerification,
 	nonce := ch.inst.Nonce
 	pk := ch.inst.ID
 
-	ApiPath := "challenge/" + strconv.FormatInt(pk, 10) + "/" + nonce
+	ApiPath := "challenge/" + strconv.FormatInt(pk, 10) + "/" + nonce+"/"
 
 	data := ch.inst.prepareDataQuery(
 		map[string]interface{}{
@@ -68,8 +68,6 @@ func (ch *Challenges) SelectVerifyMethod(choice string) (*InstagramVerification,
 		},
 	)
 
-	fmt.Println("Response",string(body[:]))
-
 	resp := InstagramVerification{}
 	if err = json.Unmarshal(body, &resp); err != nil {
 		return nil, err
@@ -83,7 +81,7 @@ func (ch *Challenges) VerifyCode(code string) error {
 	nonce := ch.inst.Nonce
 	pk := ch.inst.ID
 
-	ApiPath := "challenge/" + strconv.FormatInt(pk, 10) + "/" + nonce
+	ApiPath := "challenge/" + strconv.FormatInt(pk, 10) + "/" + nonce+"/"
 
 	data := ch.inst.prepareDataQuery(
 		map[string]interface{}{
@@ -100,6 +98,7 @@ func (ch *Challenges) VerifyCode(code string) error {
 		},
 	)
 
+	fmt.Println("Response:",string(body[:]))
 	if err != nil {
 		return err
 	}
