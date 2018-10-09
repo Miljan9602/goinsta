@@ -3,7 +3,6 @@ package goinsta
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/tidwall/gjson"
 	"strconv"
 )
@@ -98,7 +97,6 @@ func (ch *Challenges) VerifyCode(code string) error {
 		},
 	)
 
-	fmt.Println("Response:",string(body[:]))
 	if err != nil {
 		return err
 	}
