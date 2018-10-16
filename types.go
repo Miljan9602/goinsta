@@ -12,6 +12,7 @@ type ConfigFile struct {
 	DeviceID  string         `json:"device_id"`
 	UUID      string         `json:"uuid"`
 	Nonce     string         `json:"nonce"`
+	UserAgent string         `json:"user_agent"`
 	RankToken string         `json:"rank_token"`
 	Token     string         `json:"token"`
 	PhoneID   string         `json:"phone_id"`

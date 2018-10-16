@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"github.com/sethgrid/pester"
+	"net"
 	"net/http"
 	"net/http/cookiejar"
 	neturl "net/url"
@@ -46,6 +47,9 @@ type Instagram struct {
 
 	// ApiPath for challenge.
 	Nonce string
+
+	// Every account will have it's own user-agent.
+	userAgent string
 
 	// Provider for exporting/importing account details and cookies.
 	Provider Provider
@@ -100,9 +104,9 @@ func (inst *Instagram) SetUser(username string, pk int64, password string) {
 	inst.user = username
 	inst.ID = pk
 	inst.pass = password
-	inst.dID = generateDeviceID(
-		generateMD5Hash(username + password),
-	)
+	userAgent, deviceID := UserAgentAndDevice(username, password)
+	inst.dID = deviceID
+	inst.userAgent = userAgent
 	inst.uuid = generateUUID()
 	inst.pid = generateUUID()
 	inst.Provider.Import()
@@ -155,6 +159,24 @@ func (inst *Instagram) SetProxy(url string, insecure bool) error {
 		}
 	}
 	return err
+}
+
+// Set TCP end point,
+func (inst *Instagram) SetTCP(address string) {
+
+	localAddr := &net.TCPAddr{
+		IP: net.ParseIP(address),
+	}
+
+	inst.c.Transport = &http.Transport{
+		DialContext: (&net.Dialer{
+			Timeout:   30 * time.Second,
+			KeepAlive: 30 * time.Second,
+			LocalAddr: localAddr,
+			DualStack: true,
+		}).DialContext,
+		DisableKeepAlives: true,
+	}
 }
 
 // UnsetProxy unsets proxy for connection.

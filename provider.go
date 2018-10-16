@@ -39,6 +39,7 @@ func (redis *RedisProvider) Export() error {
 		UUID:      redis.inst.uuid,
 		RankToken: redis.inst.rankToken,
 		Token:     redis.inst.token,
+		UserAgent: redis.inst.userAgent,
 		PhoneID:   redis.inst.pid,
 		Cookies:   cookies,
 	}
@@ -82,6 +83,7 @@ func (redis *RedisProvider) Import() error {
 	inst := redis.GetInstagram()
 	inst.user = config.User
 	inst.dID = config.DeviceID
+	inst.userAgent = config.UserAgent
 	inst.uuid = config.UUID
 	inst.rankToken = config.RankToken
 	inst.token = config.Token
@@ -106,6 +108,10 @@ func (redis *RedisProvider) SetInstagram(insta *Instagram) {
 
 func (redis *RedisProvider) GetInstagram() *Instagram {
 	return redis.inst
+}
+
+func (redis *RedisProvider) GetClient() *redis.Client {
+	return redis.client
 }
 
 func NewRedisProvider(op redis.Options, tableName string) (*RedisProvider, error) {
