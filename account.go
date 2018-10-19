@@ -28,7 +28,6 @@ type Account struct {
 	ProfilePicID               string       `json:"profile_pic_id"`
 	CanSeeOrganicInsights      bool         `json:"can_see_organic_insights"`
 	ShowInsightsTerms          bool         `json:"show_insights_terms"`
-	Nametag                    Nametag      `json:"nametag"`
 	HasAnonymousProfilePicture bool         `json:"has_anonymous_profile_picture"`
 	IsPrivate                  bool         `json:"is_private"`
 	IsUnpublished              bool         `json:"is_unpublished"`

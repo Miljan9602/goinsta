@@ -114,16 +114,14 @@ func (redis *RedisProvider) GetClient() *redis.Client {
 	return redis.client
 }
 
-func NewRedisProvider(op redis.Options, tableName string) (*RedisProvider, error) {
+func NewRedisProvider(cl *redis.Client, tableName string) (*RedisProvider, error) {
 
-	client := redis.NewClient(&op)
-
-	_, err := client.Ping().Result()
+	_, err := cl.Ping().Result()
 
 	if err != nil {
 		return nil,err
 	}
 
-	return &RedisProvider{client: client, tableName: tableName}, nil
+	return &RedisProvider{client: cl, tableName: tableName}, nil
 }
 
