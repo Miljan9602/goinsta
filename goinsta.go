@@ -45,6 +45,10 @@ type Instagram struct {
 
 	ID int64
 
+	// Proxy settings
+	Proxy string
+	InsecureProxy bool
+
 	// ApiPath for challenge.
 	Nonce string
 
@@ -157,6 +161,9 @@ func (inst *Instagram) SetProxy(url string, insecure bool) error {
 				InsecureSkipVerify: insecure,
 			},
 		}
+
+		inst.Proxy = url
+		inst.InsecureProxy = insecure
 	}
 	return err
 }

@@ -7,16 +7,18 @@ import (
 
 // ConfigFile is a structure to store the session information so that can be exported or imported.
 type ConfigFile struct {
-	ID        int64          `json:"id"`
-	User      string         `json:"username"`
-	DeviceID  string         `json:"device_id"`
-	UUID      string         `json:"uuid"`
-	Nonce     string         `json:"nonce"`
-	UserAgent string         `json:"user_agent"`
-	RankToken string         `json:"rank_token"`
-	Token     string         `json:"token"`
-	PhoneID   string         `json:"phone_id"`
-	Cookies   []*http.Cookie `json:"cookies"`
+	ID            int64          `json:"id"`
+	User          string         `json:"username"`
+	DeviceID      string         `json:"device_id"`
+	UUID          string         `json:"uuid"`
+	Nonce         string         `json:"nonce"`
+	UserAgent     string         `json:"user_agent"`
+	RankToken     string         `json:"rank_token"`
+	Token         string         `json:"token"`
+	PhoneID       string         `json:"phone_id"`
+	Cookies       []*http.Cookie `json:"cookies"`
+	Proxy         string         `json:"proxy"`
+	InsecureProxy bool           `json:"insecure_proxy"`
 }
 
 // School is void structure (yet).
@@ -112,7 +114,7 @@ func (e Error400) Error() string {
 // Nametag is part of the account information.
 type Nametag struct {
 	Mode          int64       `json:"mode"`
-	Gradient      string       `json:"gradient"`
+	Gradient      string      `json:"gradient"`
 	Emoji         string      `json:"emoji"`
 	SelfieSticker interface{} `json:"selfie_sticker"`
 }

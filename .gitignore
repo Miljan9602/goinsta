@@ -21,7 +21,6 @@ _testmain.go
 
 *.exe
 *.test
-*.project
 *.prof
 
 *.out
@@ -35,3 +34,4 @@ _testmain.go
 .tests/
 examples/configs/
 examples/test
+examples/project

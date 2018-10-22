@@ -30,18 +30,19 @@ func (redis *RedisProvider) Export() error {
 	if err != nil {
 		return err
 	}
-
 	config := ConfigFile{
-		ID:        redis.inst.ID,
-		User:      redis.inst.user,
-		DeviceID:  redis.inst.dID,
-		Nonce:     redis.inst.Nonce,
-		UUID:      redis.inst.uuid,
-		RankToken: redis.inst.rankToken,
-		Token:     redis.inst.token,
-		UserAgent: redis.inst.userAgent,
-		PhoneID:   redis.inst.pid,
-		Cookies:   cookies,
+		ID:            redis.inst.ID,
+		User:          redis.inst.user,
+		DeviceID:      redis.inst.dID,
+		Nonce:         redis.inst.Nonce,
+		UUID:          redis.inst.uuid,
+		RankToken:     redis.inst.rankToken,
+		Token:         redis.inst.token,
+		UserAgent:     redis.inst.userAgent,
+		PhoneID:       redis.inst.pid,
+		Proxy:         redis.inst.Proxy,
+		InsecureProxy: redis.inst.InsecureProxy,
+		Cookies:       cookies,
 	}
 
 	bytes, err := json.Marshal(config)
@@ -50,7 +51,7 @@ func (redis *RedisProvider) Export() error {
 	}
 
 	field := strconv.FormatInt(redis.inst.ID, 10)
-	_,err = redis.client.HSet(redis.tableName,field, string(bytes[:])).Result()
+	_, err = redis.client.HSet(redis.tableName, field, string(bytes[:])).Result()
 
 	return err
 }
@@ -68,7 +69,7 @@ func (redis *RedisProvider) Import() error {
 		return err
 	}
 
-	if len(res) == 0{
+	if len(res) == 0 {
 		return errors.New(fmt.Sprintf("ID: %s Does not exist in redis", field))
 	}
 
@@ -79,7 +80,6 @@ func (redis *RedisProvider) Import() error {
 		return err
 	}
 
-
 	inst := redis.GetInstagram()
 	inst.user = config.User
 	inst.dID = config.DeviceID
@@ -89,6 +89,8 @@ func (redis *RedisProvider) Import() error {
 	inst.token = config.Token
 	inst.pid = config.PhoneID
 	inst.Nonce = config.Nonce
+	inst.Proxy = config.Proxy
+	inst.InsecureProxy = config.InsecureProxy
 
 	inst.c.Jar, err = cookiejar.New(nil)
 	if err != nil {
@@ -119,9 +121,8 @@ func NewRedisProvider(cl *redis.Client, tableName string) (*RedisProvider, error
 	_, err := cl.Ping().Result()
 
 	if err != nil {
-		return nil,err
+		return nil, err
 	}
 
 	return &RedisProvider{client: cl, tableName: tableName}, nil
 }
-
